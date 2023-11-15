@@ -12,7 +12,7 @@
 
 - name: Integration tests without extra kwargs
   ansible.builtin.assert:
-    that: "{{ output == data | ansible.utils.items2dictlist('address') }}"
+    that: "{{ output == data | andrei.utils.items2dictlist('address') }}"
 
 - name: Setup data and expected output with kwargs
   ansible.builtin.set_fact:
@@ -33,11 +33,11 @@
 
 - name: Integration tests with extra kwargs
   ansible.builtin.assert:
-    that: "{{ output == data | ansible.utils.items2dictlist('address', comment='some comment', list='www') }}"
+    that: "{{ output == data | andrei.utils.items2dictlist('address', comment='some comment', list='www') }}"
 
 - name: Fail for invalid data type
   ansible.builtin.set_fact:
-    _result: "{{ 'some string' | ansible.utils.items2dictlist('address') }}"
+    _result: "{{ 'some string' | andrei.utils.items2dictlist('address') }}"
   ignore_errors: true
   register: result
 
@@ -49,7 +49,7 @@
 
 - name: Fail for invalid parameter
   ansible.builtin.set_fact:
-    _result: "{{ data | ansible.utils.items2dictlist('address', address='test') }}"
+    _result: "{{ data | andrei.utils.items2dictlist('address', address='test') }}"
   ignore_errors: true
   register: result
 
