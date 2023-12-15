@@ -89,6 +89,24 @@ def test_missing_primary_keys(capfd, mocker):
     )
 
 
+def test_exclusive_args(capfd):
+    set_module_args(
+        {
+            "data": [],
+            "existing": [],
+            "comment_regex": "something",
+            "exclude_comment_regex": "else",
+        }
+    )
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert out.get("failed", False)
+    assert "parameters are mutually exclusive" in out["msg"]
+
+
 def test_simple_add(capfd):
     set_module_args(
         {
