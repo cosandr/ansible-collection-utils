@@ -1020,3 +1020,832 @@ def test_dualstack_multiple(capfd):
     assert not err
     assert not out.get("failed", False)
     validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_cname_only(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "add.example.com",
+                    "cname": "gw.example.com",
+                    "type": "CNAME",
+                },
+                {
+                    "name": "edit.example.com",
+                    "cname": "gw.example.com",
+                    "type": "CNAME",
+                },
+                {
+                    "name": "keep.example.com",
+                    "cname": "gw.example.com",
+                    "type": "CNAME",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "edit.example.com",
+                    "cname": "gw2.example.com",
+                    "type": "CNAME",
+                },
+                {
+                    ".id": "2",
+                    "comment": None,
+                    "name": "keep.example.com",
+                    "cname": "gw.example.com",
+                    "type": "CNAME",
+                },
+                {
+                    ".id": "3",
+                    "comment": None,
+                    "name": "remove.example.com",
+                    "cname": "gw.example.com",
+                    "type": "CNAME",
+                },
+            ],
+        }
+    )
+    expected_add = [
+        {
+            "name": "add.example.com",
+            "cname": "gw.example.com",
+            "type": "CNAME",
+        },
+    ]
+    expected_update = [
+        {
+            ".id": "1",
+            "name": "edit.example.com",
+            "cname": "gw.example.com",
+            "type": "CNAME",
+        },
+    ]
+    expected_remove = [
+        {
+            ".id": "3",
+            "comment": None,
+            "name": "remove.example.com",
+            "cname": "gw.example.com",
+            "type": "CNAME",
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_add_a(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+            ],
+            "existing": [],
+        }
+    )
+    expected_add = [
+        {
+            "name": "test.example.com",
+            "address": "10.0.10.1",
+        },
+        {
+            "name": "test.example.com",
+            "address": "10.0.10.2",
+        },
+    ]
+    expected_update = []
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_add_aaaa(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+            "existing": [],
+        }
+    )
+    expected_add = [
+        {
+            "name": "test.example.com",
+            "address": "2001:db8::10:1",
+        },
+        {
+            "name": "test.example.com",
+            "address": "2001:db8::10:2",
+        },
+    ]
+    expected_update = []
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_add_dualstack(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+            "existing": [],
+        }
+    )
+    expected_add = [
+        {
+            "name": "test.example.com",
+            "address": "10.0.10.1",
+        },
+        {
+            "name": "test.example.com",
+            "address": "10.0.10.2",
+        },
+        {
+            "name": "test.example.com",
+            "address": "2001:db8::10:1",
+        },
+        {
+            "name": "test.example.com",
+            "address": "2001:db8::10:2",
+        },
+    ]
+    expected_update = []
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_update_a(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+            ],
+        }
+    )
+    expected_add = [
+        {
+            "name": "test.example.com",
+            "address": "10.0.10.2",
+        },
+    ]
+    expected_update = []
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_change_a(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.11",
+                },
+                {
+                    ".id": "2",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+            ],
+        }
+    )
+    expected_add = []
+    expected_update = [
+        {
+            ".id": "1",
+            "name": "test.example.com",
+            "address": "10.0.10.1",
+        },
+    ]
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_add_and_update_a(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.11",
+                },
+            ],
+        }
+    )
+    expected_add = [
+        {
+            "name": "test.example.com",
+            "address": "10.0.10.2",
+        },
+    ]
+    expected_update = [
+        {
+            ".id": "1",
+            "name": "test.example.com",
+            "address": "10.0.10.1",
+        },
+    ]
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_remove_a(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    ".id": "2",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+            ],
+        }
+    )
+    expected_add = []
+    expected_update = []
+    expected_remove = [
+        {
+            ".id": "1",
+            "comment": None,
+            "name": "test.example.com",
+            "address": "10.0.10.1",
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_update_aaaa(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                },
+            ],
+        }
+    )
+    expected_add = [
+        {
+            "name": "test.example.com",
+            "address": "2001:db8::10:2",
+        },
+    ]
+    expected_update = []
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_change_aaaa(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:11",
+                },
+                {
+                    ".id": "2",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+        }
+    )
+    expected_add = []
+    expected_update = [
+        {
+            ".id": "1",
+            "name": "test.example.com",
+            "address": "2001:db8::10:1",
+        },
+    ]
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_remove_aaaa(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                },
+                {
+                    ".id": "2",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+        }
+    )
+    expected_add = []
+    expected_update = []
+    expected_remove = [
+        {
+            ".id": "1",
+            "comment": None,
+            "name": "test.example.com",
+            "address": "2001:db8::10:1",
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_update_dualstack(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                },
+            ],
+        }
+    )
+    expected_add = [
+        {
+            "name": "test.example.com",
+            "address": "10.0.10.2",
+        },
+        {
+            "name": "test.example.com",
+            "address": "2001:db8::10:2",
+        },
+    ]
+    expected_update = []
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_remove_dualstack(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    ".id": "2",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.2",
+                },
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                },
+                {
+                    ".id": "2",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:2",
+                },
+            ],
+        }
+    )
+    expected_add = []
+    expected_update = []
+    expected_remove = [
+        {
+            ".id": "1",
+            "comment": None,
+            "name": "test.example.com",
+            "address": "10.0.10.1",
+        },
+        {
+            ".id": "1",
+            "comment": None,
+            "name": "test.example.com",
+            "address": "2001:db8::10:1",
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_rr_dualstack_multiple(capfd):
+    set_module_args(
+        {
+            "data": [
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.11",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.12",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "10.0.10.13",
+                },
+                {
+                    "name": "test2.example.com",
+                    "address": "10.0.10.2",
+                },
+                {
+                    "name": "test3.example.com",
+                    "address": "10.0.10.3",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:11",
+                    "type": "AAAA",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:12",
+                    "type": "AAAA",
+                },
+                {
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:13",
+                    "type": "AAAA",
+                },
+                {
+                    "name": "test2.example.com",
+                    "address": "2001:db8::10:2",
+                    "type": "AAAA",
+                },
+                {
+                    "name": "test3.example.com",
+                    "address": "2001:db8::10:3",
+                    "type": "AAAA",
+                },
+            ],
+            "existing": [
+                {
+                    ".id": "1",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.1",
+                },
+                {
+                    ".id": "12",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.12",
+                },
+                {
+                    ".id": "13",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "10.0.10.13",
+                },
+                {
+                    ".id": "2",
+                    "comment": None,
+                    "name": "test2.example.com",
+                    "address": "10.0.10.12",
+                },
+                {
+                    ".id": "4",
+                    "comment": None,
+                    "name": "test4.example.com",
+                    "address": "10.0.10.44",
+                },
+                {
+                    ".id": "3",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:1",
+                    "type": "AAAA",
+                },
+                {
+                    ".id": "3",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:12",
+                    "type": "AAAA",
+                },
+                {
+                    ".id": "3",
+                    "comment": None,
+                    "name": "test.example.com",
+                    "address": "2001:db8::10:13",
+                    "type": "AAAA",
+                },
+                {
+                    ".id": "5",
+                    "comment": None,
+                    "name": "test2.example.com",
+                    "address": "2001:db8::10:12",
+                    "type": "AAAA",
+                },
+                {
+                    ".id": "6",
+                    "comment": None,
+                    "name": "test4.example.com",
+                    "address": "2001:db8::10:4",
+                    "type": "AAAA",
+                },
+            ],
+        }
+    )
+    expected_add = [
+        {
+            "name": "test3.example.com",
+            "address": "10.0.10.3",
+        },
+        {
+            "name": "test3.example.com",
+            "address": "2001:db8::10:3",
+            "type": "AAAA",
+        },
+    ]
+    expected_update = [
+        {
+            ".id": "1",
+            "name": "test.example.com",
+            "address": "10.0.10.11",
+        },
+        {
+            ".id": "2",
+            "name": "test2.example.com",
+            "address": "10.0.10.2",
+        },
+        {
+            ".id": "3",
+            "name": "test.example.com",
+            "address": "2001:db8::10:11",
+            "type": "AAAA",
+        },
+        {
+            ".id": "5",
+            "name": "test2.example.com",
+            "address": "2001:db8::10:2",
+            "type": "AAAA",
+        },
+    ]
+    expected_remove = [
+        {
+            ".id": "4",
+            "comment": None,
+            "name": "test4.example.com",
+            "address": "10.0.10.44",
+        },
+        {
+            ".id": "6",
+            "comment": None,
+            "name": "test4.example.com",
+            "address": "2001:db8::10:4",
+            "type": "AAAA",
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_dns_entries.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
