@@ -13,9 +13,7 @@ from ansible_collections.community.general.tests.unit.plugins.modules.utils impo
 )
 
 
-def validate_output(
-    out: dict, expected_add: list, expected_update: list, expected_remove: list
-):
+def validate_output(out, expected_add, expected_update, expected_remove):
     assert out["to_add"] == expected_add
     assert out["to_update"] == expected_update
     assert out["to_remove"] == expected_remove

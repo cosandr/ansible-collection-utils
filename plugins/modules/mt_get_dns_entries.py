@@ -90,7 +90,8 @@ def main():
                 continue
         existing_managed.append(d)
 
-    data_tmp = data.copy()
+    # Python 2.7 doesn't have list.copy()
+    data_tmp = list(data)
     data = []
     # Remove invalid data
     for d in data_tmp:
@@ -105,7 +106,7 @@ def main():
         else:
             data.append(d)
 
-    data_tmp = data.copy()
+    data_tmp = list(data)
     data = []
     # Find entries update strictly
     for d in data_tmp:
