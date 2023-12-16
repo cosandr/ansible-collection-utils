@@ -17,12 +17,18 @@ def host_num_in_net(address, net=None):
     elif address.version == 6:
         net = IPNetwork(str(address) + "/64")
     else:
-        raise AnsibleFilterError("host_num_in_net: Unknown error, cannot determine network")
+        raise AnsibleFilterError(
+            "host_num_in_net: Unknown error, cannot determine network"
+        )
     if address not in net:
-        raise AnsibleFilterError("host_num_in_net: Address '{0}' is not in network '{1}'".format(str(address), str(net)))
+        raise AnsibleFilterError(
+            "host_num_in_net: Address '{0}' is not in network '{1}'".format(
+                str(address), str(net)
+            )
+        )
     return int(address) - net.first
 
 
 class FilterModule(object):
     def filters(self):
-        return {'host_num_in_net': host_num_in_net}
+        return {"host_num_in_net": host_num_in_net}

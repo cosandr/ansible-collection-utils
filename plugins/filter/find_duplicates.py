@@ -17,4 +17,4 @@ def find_duplicates(_input):
 
 class FilterModule(object):
     def filters(self):
-        return {'find_duplicates': find_duplicates}
+        return {"find_duplicates": find_duplicates}

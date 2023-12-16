@@ -18,16 +18,16 @@ def create_nfs_models(paths, hosts, shares=None, kwargs=None):
     }
     kwargs = kwargs or {}
     shares = shares or []
-    state = kwargs.pop('state', 'present')
+    state = kwargs.pop("state", "present")
     for p in paths:
         model = model_tmpl.copy()
-        model['paths'] = [p]
-        model['hosts'] = hosts
+        model["paths"] = [p]
+        model["hosts"] = hosts
         model.update(kwargs)
-        shares.append({'model': model, 'state': state})
+        shares.append({"model": model, "state": state})
     return shares
 
 
 class FilterModule(object):
     def filters(self):
-        return {'create_nfs_models': create_nfs_models}
+        return {"create_nfs_models": create_nfs_models}

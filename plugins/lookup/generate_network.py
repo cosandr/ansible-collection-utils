@@ -19,7 +19,6 @@ DOCUMENTATION = template.DOCUMENTATION
 
 # https://stackoverflow.com/a/39681672
 class MyDumper(yaml.SafeDumper):
-
     def increase_indent(self, flow=False, indentless=False):
         return super(MyDumper, self).increase_indent(flow, False)
 
@@ -35,9 +34,16 @@ class MyDumper(yaml.SafeDumper):
 
 # Ripped off ansible.plugins.filter.core
 def to_nice_yaml(a, indent=4, *args, **kw):
-    '''Make verbose, human readable yaml'''
+    """Make verbose, human readable yaml"""
     try:
-        transformed = yaml.dump(a, Dumper=MyDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
+        transformed = yaml.dump(
+            a,
+            Dumper=MyDumper,
+            indent=indent,
+            allow_unicode=True,
+            default_flow_style=False,
+            **kw
+        )
     except Exception as e:
         raise AnsibleLookupError("to_nice_yaml - %s" % to_native(e), orig_exc=e)
     return to_text(transformed)
@@ -53,47 +59,67 @@ def net_overlaps(net, others):
 def check_net_overlaps(data):
     checked = []
     for var_name, var in data.items():
-        if not var_name.endswith('_net'):
+        if not var_name.endswith("_net"):
             continue
         for net_name, net_cfg in var.items():
-            cidrs = (net_cfg.get('cidr'), net_cfg.get('cidr6'))
+            cidrs = (net_cfg.get("cidr"), net_cfg.get("cidr6"))
             for cidr in cidrs:
                 if cidr is None:
                     continue
                 net = IPNetwork(cidr)
                 overlaps = net_overlaps(net, checked)
                 if overlaps:
-                    raise AnsibleLookupError("%s.%s: '%s' overlaps with %s.%s '%s'" %
-                                             (var_name, net_name, str(net), overlaps[2], overlaps[1], str(overlaps[0])))
+                    raise AnsibleLookupError(
+                        "%s.%s: '%s' overlaps with %s.%s '%s'"
+                        % (
+                            var_name,
+                            net_name,
+                            str(net),
+                            overlaps[2],
+                            overlaps[1],
+                            str(overlaps[0]),
+                        )
+                    )
                 checked.append((net, var_name, net_name))
 
 
 def check_subnet_overlaps(data):
     checked = []
-    for net_name, net_subnets in data.get('subnets', {}).items():
+    for net_name, net_subnets in data.get("subnets", {}).items():
         for sub_name, cidrs in net_subnets.items():
             for cidr in cidrs:
                 net = IPNetwork(cidr)
                 overlaps = net_overlaps(net, checked)
                 if overlaps:
-                    raise AnsibleLookupError("'%s' from %s [%s] overlaps with '%s' from %s [%s]" %
-                                             (str(net), sub_name, net_name, str(overlaps[0]), overlaps[1], overlaps[2]))
+                    raise AnsibleLookupError(
+                        "'%s' from %s [%s] overlaps with '%s' from %s [%s]"
+                        % (
+                            str(net),
+                            sub_name,
+                            net_name,
+                            str(overlaps[0]),
+                            overlaps[1],
+                            overlaps[2],
+                        )
+                    )
                 checked.append((net, sub_name, net_name))
 
 
 def check_vip_duplicates(data):
     checked = []
-    for net_name, vip_config in data.get('vips', {}).items():
+    for net_name, vip_config in data.get("vips", {}).items():
         for vip_name, vip in vip_config.items():
             if vip in checked:
-                raise AnsibleLookupError("VIP %s - '%s' in %s is a duplicate" % (vip_name, vip, net_name))
+                raise AnsibleLookupError(
+                    "VIP %s - '%s' in %s is a duplicate" % (vip_name, vip, net_name)
+                )
             else:
                 checked.append(vip)
 
 
 def check_subnet_gaps(data):
     """Subnets MUST be in order!"""
-    for net_name, net_subnets in data.get('subnets', {}).items():
+    for net_name, net_subnets in data.get("subnets", {}).items():
         last_net = {}
         for sub_name, cidrs in net_subnets.items():
             for cidr in cidrs:
@@ -105,9 +131,21 @@ def check_subnet_gaps(data):
                 last_net_name, last_net_ip = last_net[net.version]
                 gap = math.trunc(math.log2(abs(net.first - last_net_ip.last)))
                 if gap:
-                    fit_net = "%s/%s" % (str(IPAddress(last_net_ip.last + 1)), size - gap)
-                    Display().warning("%s: %s fits between %s [%s] and %s [%s]" %
-                                        (net_name, fit_net, last_net_name, str(last_net_ip), sub_name, str(net)))
+                    fit_net = "%s/%s" % (
+                        str(IPAddress(last_net_ip.last + 1)),
+                        size - gap,
+                    )
+                    Display().warning(
+                        "%s: %s fits between %s [%s] and %s [%s]"
+                        % (
+                            net_name,
+                            fit_net,
+                            last_net_name,
+                            str(last_net_ip),
+                            sub_name,
+                            str(net),
+                        )
+                    )
                 last_net[net.version] = (sub_name, net)
 
 
@@ -118,7 +156,7 @@ class LookupModule(template.LookupModule):
         terms = terms[0]
         # Template one by one, parse as yaml and include them for next run
         for term in terms:
-            kwargs['template_vars'] = acc_vars
+            kwargs["template_vars"] = acc_vars
             ret = super().run([term], variables, **kwargs)
             acc_vars |= yaml.safe_load(ret[0])
 
@@ -127,12 +165,16 @@ class LookupModule(template.LookupModule):
         # Remove vars prefixed with _
         ret = {}
         for k, v in acc_vars.items():
-            if k.startswith('_'):
+            if k.startswith("_"):
                 continue
-            elif k == 'subnets':
+            elif k == "subnets":
                 subnets = {}
                 for net_name, net_subnets in v.items():
-                    subnets[net_name] = {sub_name: cidrs for sub_name, cidrs in net_subnets.items() if not sub_name.startswith('_')}
+                    subnets[net_name] = {
+                        sub_name: cidrs
+                        for sub_name, cidrs in net_subnets.items()
+                        if not sub_name.startswith("_")
+                    }
                 ret[k] = subnets
             else:
                 ret[k] = v

@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-def bool_to_yes(_input, default=''):
+def bool_to_yes(_input, default=""):
     """
     Return yes if _input is True, no if False
     do nothing otherwise
@@ -18,9 +18,9 @@ def bool_to_yes(_input, default=''):
     {% endif %}
     """
     if _input is True:
-        return 'yes'
+        return "yes"
     elif _input is False:
-        return 'no'
+        return "no"
     elif default:
         return default
     else:
@@ -29,4 +29,4 @@ def bool_to_yes(_input, default=''):
 
 class FilterModule(object):
     def filters(self):
-        return {'bool_to_yes': bool_to_yes}
+        return {"bool_to_yes": bool_to_yes}

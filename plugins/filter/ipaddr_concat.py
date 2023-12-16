@@ -7,4 +7,4 @@ from ansible_collections.andrei.utils.plugins.module_utils.network import ipaddr
 
 class FilterModule(object):
     def filters(self):
-        return {'ipaddr_concat': ipaddr_concat}
+        return {"ipaddr_concat": ipaddr_concat}

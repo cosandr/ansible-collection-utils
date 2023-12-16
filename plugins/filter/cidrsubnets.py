@@ -7,7 +7,10 @@ from netaddr import IPNetwork
 from ansible.errors import AnsibleFilterError
 
 
-from ansible_collections.andrei.utils.plugins.module_utils.network import prefix_from_diff, next_of_size
+from ansible_collections.andrei.utils.plugins.module_utils.network import (
+    prefix_from_diff,
+    next_of_size,
+)
 
 
 def fill_remaining(net, subnets, start=0):
@@ -22,7 +25,7 @@ def fill_remaining(net, subnets, start=0):
     else:
         # Look for gaps in the middle
         for i in range(len(subnets) - 1):
-            gap = abs(subnets[i].last - subnets[i+1].first)
+            gap = abs(subnets[i].last - subnets[i + 1].first)
             if gap > 1:
                 if start > 0 and subnets[i].last < start:
                     continue
@@ -35,7 +38,16 @@ def fill_remaining(net, subnets, start=0):
     return subnets
 
 
-def cidrsubnets(net, *prefixes, fill=False, fill_only_end=True, start=0, num_prefixes=0, prefix_size=None, prefix_skip=0):
+def cidrsubnets(
+    net,
+    *prefixes,
+    fill=False,
+    fill_only_end=True,
+    start=0,
+    num_prefixes=0,
+    prefix_size=None,
+    prefix_skip=0
+):
     if prefixes and num_prefixes:
         raise AnsibleFilterError("prefixes and num_prefixes are mutually exclusive")
     if prefix_skip and not prefix_size:
@@ -50,7 +62,9 @@ def cidrsubnets(net, *prefixes, fill=False, fill_only_end=True, start=0, num_pre
     if start:
         start = net.first + start
     elif prefix_skip:
-        start = net.first + (2 ** prefix_from_diff(net, prefix_size)) * (prefix_skip - 1)
+        start = net.first + (2 ** prefix_from_diff(net, prefix_size)) * (
+            prefix_skip - 1
+        )
     if num_prefixes:
         prefixes = [prefix_size for _ in range(num_prefixes)]
     for p in prefixes:
@@ -65,4 +79,4 @@ def cidrsubnets(net, *prefixes, fill=False, fill_only_end=True, start=0, num_pre
 
 class FilterModule(object):
     def filters(self):
-        return {'cidrsubnets': cidrsubnets}
+        return {"cidrsubnets": cidrsubnets}

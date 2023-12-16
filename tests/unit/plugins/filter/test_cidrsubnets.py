@@ -4,8 +4,7 @@ __metaclass__ = type
 
 import unittest
 
-from ansible_collections.andrei.utils.plugins.filter.cidrsubnets import \
-    cidrsubnets
+from ansible_collections.andrei.utils.plugins.filter.cidrsubnets import cidrsubnets
 
 from ansible.errors import AnsibleFilterError
 

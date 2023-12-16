@@ -27,7 +27,7 @@ def ipaddr_concat_query(nets, host, query, prefixlen):
     if len(nets) > 1 and spanning_cidr(nets).prefixlen == 0:
         raise AnsibleFilterError("ipaddr_concat: CIDRs span the entire address range")
     if prefixlen is not None:
-        query = 'address'
+        query = "address"
     nets.sort()
     for n in nets:
         if host >= n.size:
@@ -58,11 +58,16 @@ def ipaddr_concat(ips, host, query="", prefixlen=None, wantlist=False):
     v4_nets = [net for net in nets if net.version == 4]
     v6_nets = [net for net in nets if net.version == 6]
     if v4_nets and v6_nets and prefixlen:
-        raise AnsibleFilterError("prefixlen cannot be used when mixing v4 and v6 networks.")
-    ret = [addr for addr in (
+        raise AnsibleFilterError(
+            "prefixlen cannot be used when mixing v4 and v6 networks."
+        )
+    ret = [
+        addr
+        for addr in (
             ipaddr_concat_query(v4_nets, host, query, prefixlen),
             ipaddr_concat_query(v6_nets, host, query, prefixlen),
-        ) if addr is not None
+        )
+        if addr is not None
     ]
     if not ret:
         raise AnsibleFilterError("No addresses found")

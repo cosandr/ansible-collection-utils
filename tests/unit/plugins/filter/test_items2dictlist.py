@@ -7,7 +7,9 @@ import unittest
 
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 
-from ansible_collections.andrei.utils.plugins.filter.items2dictlist import items2dictlist
+from ansible_collections.andrei.utils.plugins.filter.items2dictlist import (
+    items2dictlist,
+)
 
 
 class TestItems2DictList(unittest.TestCase):
@@ -70,4 +72,6 @@ class TestItems2DictList(unittest.TestCase):
         data = ["some string"]
         with self.assertRaises(AnsibleFilterError) as error:
             items2dictlist(data, "address", address="test")
-        self.assertEqual("items2dictlist: 'address' cannot be in kwargs", str(error.exception))
+        self.assertEqual(
+            "items2dictlist: 'address' cannot be in kwargs", str(error.exception)
+        )

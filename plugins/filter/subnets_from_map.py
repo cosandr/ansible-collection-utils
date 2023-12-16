@@ -6,7 +6,9 @@ from netaddr import IPNetwork
 
 from ansible.errors import AnsibleFilterError
 from ansible_collections.andrei.utils.plugins.module_utils.network import (
-    next_of_size, prefix_from_diff)
+    next_of_size,
+    prefix_from_diff,
+)
 
 
 def get_sizes_by_version(sizes, version):
@@ -38,8 +40,14 @@ def generate_subnets(net, subnet_map, start=0, prefix_size=None, prefix_skip=0):
         if not prefix_size:
             prefix_size = get_prefix_size_from_map(subnet_map, net.version)
         if not prefix_size:
-            raise AnsibleFilterError("v{0}_size is required if subnets are different sizes when using v{0}_prefix_skip".format(net.version))
-        start = net.first + (2 ** prefix_from_diff(net, prefix_size)) * (prefix_skip - 1)
+            raise AnsibleFilterError(
+                "v{0}_size is required if subnets are different sizes when using v{0}_prefix_skip".format(
+                    net.version
+                )
+            )
+        start = net.first + (2 ** prefix_from_diff(net, prefix_size)) * (
+            prefix_skip - 1
+        )
     for sub_name, sizes in subnet_map.items():
         sizes = get_sizes_by_version(sizes, net.version)
         if not sizes and prefix_size:
@@ -51,14 +59,27 @@ def generate_subnets(net, subnet_map, start=0, prefix_size=None, prefix_skip=0):
     return ret
 
 
-def subnets_from_map(net_def, subnet_map, v4_size=None, v6_size=None, v4_start=0, v6_start=0, v4_prefix_skip=0, v6_prefix_skip=0):
+def subnets_from_map(
+    net_def,
+    subnet_map,
+    v4_size=None,
+    v6_size=None,
+    v4_start=0,
+    v6_start=0,
+    v4_prefix_skip=0,
+    v6_prefix_skip=0,
+):
     ret = {k: [] for k in subnet_map.keys()}
     v4_subs = {}
     v6_subs = {}
-    if 'cidr' in net_def:
-        v4_subs = generate_subnets(net_def['cidr'], subnet_map, v4_start, v4_size, v4_prefix_skip)
-    if 'cidr6' in net_def:
-        v6_subs = generate_subnets(net_def['cidr6'], subnet_map, v6_start, v6_size, v6_prefix_skip)
+    if "cidr" in net_def:
+        v4_subs = generate_subnets(
+            net_def["cidr"], subnet_map, v4_start, v4_size, v4_prefix_skip
+        )
+    if "cidr6" in net_def:
+        v6_subs = generate_subnets(
+            net_def["cidr6"], subnet_map, v6_start, v6_size, v6_prefix_skip
+        )
     for k in subnet_map.keys():
         for sub in v4_subs.get(k, []) + v6_subs.get(k, []):
             ret[k].append(sub)
@@ -67,4 +88,4 @@ def subnets_from_map(net_def, subnet_map, v4_size=None, v6_size=None, v4_start=0
 
 class FilterModule(object):
     def filters(self):
-        return {'subnets_from_map': subnets_from_map}
+        return {"subnets_from_map": subnets_from_map}

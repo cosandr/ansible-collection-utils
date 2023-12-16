@@ -116,4 +116,4 @@ def default_subnet(network_defs, no_clients=None, skip_nets=None):
 
 class FilterModule(object):
     def filters(self):
-        return {'default_subnet': default_subnet}
+        return {"default_subnet": default_subnet}
