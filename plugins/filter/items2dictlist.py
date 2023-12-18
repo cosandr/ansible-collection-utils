@@ -15,7 +15,7 @@ __metaclass__ = type
 DOCUMENTATION = """
     name: items2dictlist
     author: Andrei Costescu (@cosandr)
-    version_added: "2.12.0"
+    version_added: "1.0.0"
     short_description: Transform a list of items to a list of dictionaries.
     positional: _input, key_name
     description:
@@ -36,7 +36,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
     # items => [ {"mykey": "one", "somearg": "somevalue"}, {"mykey": "two", "somearg": "somevalue"} ]
-    items: ['one', 'two'] | andrei.utils.items2dictlist('mykey', somearg='somevalue')
+    items: "{{ ['one', 'two'] | andrei.utils.items2dictlist('mykey', somearg='somevalue') }}"
 """
 
 RETURN = """

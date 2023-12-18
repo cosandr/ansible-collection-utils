@@ -1,13 +1,113 @@
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
+DOCUMENTATION = r"""
+---
+module: mt_get_dns_entries
+author: Andrei Costescu (@cosandr)
+version_added: "1.0.0"
+short_description: Compute static DNS entries for MikroTik devices.
+description: Compute static DNS entries for MikroTik devices.
+options:
+    existing:
+        description: Existing data fetched using community.routeros.api_info
+        required: true
+        type: list
+        elements: dict
+    data:
+        description: Expected data in the same format as existing data.
+        required: true
+        type: list
+        elements: dict
+    comment_regex:
+        description: Include only entries whose comments match regex.
+        required: false
+        type: str
+        default: ''
+    exclude_comment_regex:
+        description: Exclude entries whose comments match regex.
+        required: false
+        type: str
+        default: ''
+    remove_without_comment:
+        description: Remove entries not present in I(data) missing comments.
+        required: false
+        default: true
+        type: bool
+"""
+
+EXAMPLES = r"""
+- name: Get all DNS entries
+  community.routeros.api_info:
+    path: ip dns static
+    handle_disabled: null-value
+  register: __mt_dns
+
+- name: Get add, update, remove lists
+  andrei.utils.mt_get_dns_entries:
+    existing: "{{ __mt_dns.result }}"
+    data:
+      - name: example.com
+        address: 10.0.1.2
+    exclude_comment_regex: "^dhcp-.*"
+  register: __dns_lists
+
+- name: Add missing entries
+  community.routeros.api_modify:
+    path: ip dns static
+    data: "{{ __dns_lists.to_add }}"
+
+- name: Delete old DNS entries
+  community.routeros.api:
+    path: ip dns static
+    remove: "{{ item['.id'] }}"
+  loop: "{{ __dns_lists.to_remove }}"
+
+- name: Update DNS entries
+  community.routeros.api_find_and_modify:
+    path: ip dns static
+    find:
+      ".id": "{{ item['.id'] }}"
+    values: "{{ item }}"
+    require_matches_min: 1
+    require_matches_max: 1
+  loop: "{{ __dns_lists.to_update }}"
+"""
+
+RETURN = r"""
+to_add:
+    description: List of entries that need to be added.
+    type: list
+    elements: dict
+    returned: success
+to_update:
+    description: List of entries that need to be updated.
+    type: list
+    elements: dict
+    returned: success
+to_remove:
+    description: List of entries that need to be removed.
+    type: list
+    elements: dict
+    returned: success
+"""
 
 import re
+import traceback
 
-from netaddr import IPAddress
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
-from ansible.module_utils.basic import AnsibleModule
+try:
+    from netaddr import IPAddress
+except ImportError:
+    HAS_NETADDR = False
+    NETADDR_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_NETADDR = True
+    NETADDR_IMPORT_ERROR = None
 
 
 def get_entry(data, entry, strict=False):
@@ -64,6 +164,11 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[["comment_regex", "exclude_comment_regex"]],
     )
+
+    if not HAS_NETADDR:
+        module.fail_json(
+            msg=missing_required_lib("netaddr"), exception=NETADDR_IMPORT_ERROR
+        )
 
     existing = module.params["existing"]
     data = module.params["data"]

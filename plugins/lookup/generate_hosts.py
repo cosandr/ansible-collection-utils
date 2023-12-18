@@ -1,13 +1,65 @@
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-from ansible.errors import AnsibleLookupError
-from ansible.plugins.lookup import LookupBase
-from ansible_collections.ansible.utils.plugins.filter import ipv4, ipv6
-from netaddr import IPAddress
+DOCUMENTATION = r"""
+  name: generate_hosts
+  author: Andrei Costescu (@cosandr)
+  version_added: "1.0.0"
+  short_description: Generates ansible_host and wireguard_ip
+  description:
+      - This lookup returns a string that can be inserted in a INI hosts file.
+      - It uses only the inventory as input.
+  options:
+    _terms:
+      description: N/A
+      required: false
+"""
 
-from ansible_collections.andrei.utils.plugins.module_utils.network import ipaddr_concat
+EXAMPLES = r"""
+  - name: Add block to hosts file
+    delegate_to: localhost
+    run_once: true
+    ansible.builtin.blockinfile:
+      content: "{{ lookup('andrei.utils.generate_hosts') }}"
+      dest: "{{ hosts_dest }}"
+      marker: "# {mark} AUTO GENERATED VARIABLES"
+      insertafter: '^\[\all]$'
+"""
+
+RETURN = r"""
+  _raw:
+     description:
+        - String with inventory_hostname and ansible_host and/or wireguard_ip.
+     type: list
+     elements: string
+"""
+
+from ansible.errors import AnsibleLookupError
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.common.text.converters import to_text
+from ansible.plugins.lookup import LookupBase
+from ansible_collections.andrei.utils.plugins.module_utils.network import (
+    NetworkError,
+    ipaddr_concat,
+)
+from ansible_collections.ansible.utils.plugins.filter import ipv4, ipv6
+
+try:
+    from netaddr import IPAddress
+except ImportError as imp_exc:
+    NETADDR_IMPORT_ERROR = imp_exc
+else:
+    NETADDR_IMPORT_ERROR = None
+
+
+def wrap_exception(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except NetworkError as e:
+        raise AnsibleLookupError(to_text(e))
 
 
 def check_ip_duplicates(data):
@@ -33,6 +85,10 @@ def check_ip_duplicates(data):
 
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
+        if NETADDR_IMPORT_ERROR:
+            raise AnsibleLookupError(
+                missing_required_lib("netaddr")
+            ) from NETADDR_IMPORT_ERROR
         ret = []
 
         managed_ips = {}
@@ -49,7 +105,9 @@ class LookupModule(LookupBase):
                     )
                 v4_subnet = ipv4.ipv4(hv["subnets"][hv["host_net"]][hv["host_subnet"]])
                 if v4_subnet:
-                    tmp["ansible_host"] = ipaddr_concat(v4_subnet, hv["host_num"])
+                    tmp["ansible_host"] = wrap_exception(
+                        ipaddr_concat, v4_subnet, hv["host_num"]
+                    )
                 v6_subnet = ipv6.ipv6(hv["subnets"][hv["host_net"]][hv["host_subnet"]])
                 if v6_subnet:
                     host_num6 = hv["host_num"] + 1
@@ -58,7 +116,9 @@ class LookupModule(LookupBase):
                         "no",
                     ):
                         host_num6 = hv["host_num"]
-                    tmp["ansible_host6"] = ipaddr_concat(v6_subnet, host_num6)
+                    tmp["ansible_host6"] = wrap_exception(
+                        ipaddr_concat, v6_subnet, host_num6
+                    )
             if "host_wg_num" in hv:
                 if "host_wg_net" not in hv or "host_wg_subnet" not in hv:
                     raise AnsibleLookupError(
@@ -68,7 +128,9 @@ class LookupModule(LookupBase):
                     hv["subnets"][hv["host_wg_net"]][hv["host_wg_subnet"]]
                 )
                 if v4_subnet:
-                    tmp["wireguard_ip"] = ipaddr_concat(v4_subnet, hv["host_wg_num"])
+                    tmp["wireguard_ip"] = wrap_exception(
+                        ipaddr_concat, v4_subnet, hv["host_wg_num"]
+                    )
                 v6_subnet = ipv6.ipv6(
                     hv["subnets"][hv["host_wg_net"]][hv["host_wg_subnet"]]
                 )
@@ -78,7 +140,9 @@ class LookupModule(LookupBase):
                         "host_wg_num6_offset"
                     ].lower() in ("false", "no"):
                         host_wg_num6 = hv["host_wg_num"]
-                    tmp["wireguard_ip6"] = ipaddr_concat(v6_subnet, host_wg_num6)
+                    tmp["wireguard_ip6"] = wrap_exception(
+                        ipaddr_concat, v6_subnet, host_wg_num6
+                    )
             # Skip if host isn't managed
             if not tmp:
                 continue

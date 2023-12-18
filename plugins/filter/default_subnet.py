@@ -3,9 +3,18 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from ansible.utils.display import Display
-from netaddr import IPNetwork
 from copy import deepcopy
+
+from ansible.errors import AnsibleFilterError
+from ansible.module_utils.basic import missing_required_lib
+from ansible.utils.display import Display
+
+try:
+    from netaddr import IPNetwork
+except ImportError as imp_exc:
+    NETADDR_IMPORT_ERROR = imp_exc
+else:
+    NETADDR_IMPORT_ERROR = None
 
 
 def split_network_v4(n, no_clients):
@@ -97,6 +106,10 @@ def default_subnet(network_defs, no_clients=None, skip_nets=None):
         ]
     }
     """
+    if NETADDR_IMPORT_ERROR:
+        raise AnsibleFilterError(
+            missing_required_lib("netaddr")
+        ) from NETADDR_IMPORT_ERROR
     ret = {}
     no_clients = no_clients or []
     skip_nets = skip_nets or []

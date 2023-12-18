@@ -3,14 +3,22 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from math import log2, trunc
-from netaddr import IPNetwork
+
 from ansible.errors import AnsibleFilterError
-
-
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.common.text.converters import to_text
 from ansible_collections.andrei.utils.plugins.module_utils.network import (
-    prefix_from_diff,
+    NetworkError,
     next_of_size,
+    prefix_from_diff,
 )
+
+try:
+    from netaddr import IPNetwork
+except ImportError as imp_exc:
+    NETADDR_IMPORT_ERROR = imp_exc
+else:
+    NETADDR_IMPORT_ERROR = None
 
 
 def fill_remaining(net, subnets, start=0):
@@ -32,7 +40,10 @@ def fill_remaining(net, subnets, start=0):
                 size = prefix_from_diff(net, trunc(log2(gap)))
                 break
     if size > 0:
-        subnets.append(next_of_size(net, subnets, size, start))
+        try:
+            subnets.append(next_of_size(net, subnets, size, start))
+        except NetworkError as e:
+            raise AnsibleFilterError(to_text(e))
         # Try again in case there are more
         return fill_remaining(net, subnets, start)
     return subnets
@@ -48,6 +59,10 @@ def cidrsubnets(
     prefix_size=None,
     prefix_skip=0
 ):
+    if NETADDR_IMPORT_ERROR:
+        raise AnsibleFilterError(
+            missing_required_lib("netaddr")
+        ) from NETADDR_IMPORT_ERROR
     if prefixes and num_prefixes:
         raise AnsibleFilterError("prefixes and num_prefixes are mutually exclusive")
     if prefix_skip and not prefix_size:
@@ -66,9 +81,12 @@ def cidrsubnets(
             prefix_skip - 1
         )
     if num_prefixes:
-        prefixes = [prefix_size for _ in range(num_prefixes)]
+        prefixes = [prefix_size for i in range(num_prefixes)]
     for p in prefixes:
-        subnets.append(next_of_size(net, subnets, p, start))
+        try:
+            subnets.append(next_of_size(net, subnets, p, start))
+        except NetworkError as e:
+            raise AnsibleFilterError(to_text(e))
     if fill:
         start = 0
         if fill_only_end and subnets:

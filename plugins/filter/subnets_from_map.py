@@ -2,13 +2,21 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-from netaddr import IPNetwork
-
 from ansible.errors import AnsibleFilterError
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.common.text.converters import to_text
 from ansible_collections.andrei.utils.plugins.module_utils.network import (
+    NetworkError,
     next_of_size,
     prefix_from_diff,
 )
+
+try:
+    from netaddr import IPNetwork
+except ImportError as imp_exc:
+    NETADDR_IMPORT_ERROR = imp_exc
+else:
+    NETADDR_IMPORT_ERROR = None
 
 
 def get_sizes_by_version(sizes, version):
@@ -53,7 +61,10 @@ def generate_subnets(net, subnet_map, start=0, prefix_size=None, prefix_skip=0):
         if not sizes and prefix_size:
             sizes = [prefix_size]
         for s in sizes:
-            tmp = next_of_size(net, subs, s, start)
+            try:
+                tmp = next_of_size(net, subs, s, start)
+            except NetworkError as e:
+                raise AnsibleFilterError(to_text(e))
             ret[sub_name].append(str(tmp))
             subs.add(tmp)
     return ret
@@ -69,6 +80,10 @@ def subnets_from_map(
     v4_prefix_skip=0,
     v6_prefix_skip=0,
 ):
+    if NETADDR_IMPORT_ERROR:
+        raise AnsibleFilterError(
+            missing_required_lib("netaddr")
+        ) from NETADDR_IMPORT_ERROR
     ret = {k: [] for k in subnet_map.keys()}
     v4_subs = {}
     v6_subs = {}
