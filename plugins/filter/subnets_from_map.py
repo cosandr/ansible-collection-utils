@@ -23,8 +23,8 @@ def get_sizes_by_version(sizes, version):
     if isinstance(sizes, int):
         sizes = [sizes]
     if version == 4:
-        return [s for s in sizes if s <= 32]
-    return [s for s in sizes if s > 32]
+        return [s for s in sizes if abs(s) <= 32]
+    return [s for s in sizes if abs(s) > 32]
 
 
 def get_prefix_size_from_map(subnet_map, version):

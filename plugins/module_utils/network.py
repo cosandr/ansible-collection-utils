@@ -26,10 +26,24 @@ def prefix_from_diff(net, diff):
 
 
 def next_of_size(net, subnets, size, start=0):
-    for sub in net.subnet(size):
+    from_end = size < 0
+    if from_end:
+        size *= -1
+    ret = None
+    gen = net.subnet(size)
+    # NOTE: from_end is very inefficient, would take for ever with most IPv6 subnets
+    while True:
+        try:
+            sub = next(gen)
+        except StopIteration:
+            break
         if not net_overlaps(sub, subnets) and sub.first > start:
-            return sub
-    raise NetworkError("'{}' is too small".format(str(net)))
+            ret = sub
+            if not from_end:
+                break
+    if ret is None:
+        raise NetworkError("'{}' is too small".format(str(net)))
+    return ret
 
 
 def ipaddr_concat_query(nets, host, query, prefixlen):

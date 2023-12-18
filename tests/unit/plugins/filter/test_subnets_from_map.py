@@ -79,6 +79,19 @@ class TestSubnetsFromMap(unittest.TestCase):
         result = subnets_from_map(data, *args, **kwargs)
         self.assertEqual(result, output)
 
+    def test_v4_only_mixed_from_end(self):
+        data = {"cidr": "172.27.0.0/16"}
+        args = [{"svc": 27, "pod": 26, "test": 30, "test2": -24}]
+        kwargs = {}
+        output = {
+            "svc": ["172.27.0.0/27"],
+            "pod": ["172.27.0.64/26"],
+            "test": ["172.27.0.32/30"],
+            "test2": ["172.27.255.0/24"],
+        }
+        result = subnets_from_map(data, *args, **kwargs)
+        self.assertEqual(result, output)
+
     def test_v4_only_mixed_multiple(self):
         data = {"cidr": "172.27.0.0/16"}
         args = [{"svc": (27, 27, 28), "pod": 26, "test": (30, 29), "test2": (27, 25)}]
@@ -88,6 +101,21 @@ class TestSubnetsFromMap(unittest.TestCase):
             "pod": ["172.27.0.128/26"],
             "test": ["172.27.0.80/30", "172.27.0.88/29"],
             "test2": ["172.27.0.96/27", "172.27.1.0/25"],
+        }
+        result = subnets_from_map(data, *args, **kwargs)
+        self.assertEqual(result, output)
+
+    def test_v4_only_mixed_multiple_from_end(self):
+        data = {"cidr": "172.27.0.0/16"}
+        args = [
+            {"svc": (27, 27, -28), "pod": 26, "test": (30, -29), "test2": (27, -25)}
+        ]
+        kwargs = {}
+        output = {
+            "svc": ["172.27.0.0/27", "172.27.0.32/27", "172.27.255.240/28"],
+            "pod": ["172.27.0.64/26"],
+            "test": ["172.27.0.128/30", "172.27.255.232/29"],
+            "test2": ["172.27.0.160/27", "172.27.255.0/25"],
         }
         result = subnets_from_map(data, *args, **kwargs)
         self.assertEqual(result, output)
@@ -270,6 +298,37 @@ class TestSubnetsFromMap(unittest.TestCase):
                 "fd00:172:27:10::/60",
                 "fd00:172:27:2::/64",
                 "fd00:172:27:0:4::/78",
+            ],
+        }
+        result = subnets_from_map(data, *args, **kwargs)
+        self.assertEqual(result, output)
+
+    def test_dual_stack_mixed_multiple_from_end(self):
+        data = {"cidr": "172.27.0.0/16", "cidr6": "fd00:172:27::/56"}
+        args = [
+            {
+                "svc": (27, -29, -64),
+                "pod": 64,
+                "test": (30, 63, -60),
+                "test2": (25, 27, -28, 60, 64, -61),
+            }
+        ]
+        kwargs = {}
+        output = {
+            "svc": ["172.27.0.0/27", "172.27.255.248/29", "fd00:172:27:ff::/64"],
+            "pod": ["fd00:172:27::/64"],
+            "test": [
+                "172.27.0.32/30",
+                "fd00:172:27:2::/63",
+                "fd00:172:27:e0::/60",
+            ],
+            "test2": [
+                "172.27.0.128/25",
+                "172.27.0.64/27",
+                "172.27.255.224/28",
+                "fd00:172:27:10::/60",
+                "fd00:172:27:1::/64",
+                "fd00:172:27:f0::/61",
             ],
         }
         result = subnets_from_map(data, *args, **kwargs)

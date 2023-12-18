@@ -95,3 +95,44 @@ class TestCidrSubnets(unittest.TestCase):
         with self.assertRaises(AnsibleFilterError) as error:
             cidrsubnets(data, *args)
         self.assertIn("is too small", str(error.exception))
+
+    def test_from_end(self):
+        data = "10.0.50.0/24"
+        args = [-28]
+        output = [
+            "10.0.50.240/28",
+        ]
+        result = cidrsubnets(data, *args, fill=True)
+        self.assertEqual(result, output)
+
+    def test_from_end_multiple(self):
+        data = "10.0.50.0/24"
+        args = [-28, -28]
+        output = [
+            "10.0.50.224/28",
+            "10.0.50.240/28",
+        ]
+        result = cidrsubnets(data, *args, fill=True)
+        self.assertEqual(result, output)
+
+    def test_from_end_combo(self):
+        data = "10.0.50.0/24"
+        args = [27, 28, -28]
+        output = [
+            "10.0.50.0/27",
+            "10.0.50.32/28",
+            "10.0.50.240/28",
+        ]
+        result = cidrsubnets(data, *args, fill=True)
+        self.assertEqual(result, output)
+
+    def test_from_end_combo_v6(self):
+        data = "fd00:172:27::/64"
+        args = [80, 80, -80]
+        output = [
+            "fd00:172:27::/80",
+            "fd00:172:27:0:1::/80",
+            "fd00:172:27:0:ffff::/80",
+        ]
+        result = cidrsubnets(data, *args, fill=True)
+        self.assertEqual(result, output)
