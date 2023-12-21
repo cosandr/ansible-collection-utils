@@ -75,7 +75,13 @@ def merge_dicts(one, two):
     return ret
 
 
-def default_subnet(network_defs, no_clients=None, skip_nets=None):
+def default_subnet(
+    network_defs,
+    no_clients=None,
+    skip_nets=None,
+    v4_name="cidr",
+    v6_name="cidr6",
+):
     """Generates the default subnet layout
     Input:
     "internal_net": {
@@ -119,10 +125,10 @@ def default_subnet(network_defs, no_clients=None, skip_nets=None):
         k_nc = no_clients is True or k in no_clients
         v4_dict = {}
         v6_dict = {}
-        if "cidr" in v:
-            v4_dict = split_network_v4(IPNetwork(v["cidr"]), k_nc)
-        if "cidr6" in v:
-            v6_dict = split_network_v6(IPNetwork(v["cidr6"]), k_nc)
+        if v4_name in v:
+            v4_dict = split_network_v4(IPNetwork(v[v4_name]), k_nc)
+        if v6_name in v:
+            v6_dict = split_network_v6(IPNetwork(v[v6_name]), k_nc)
         ret[k] = merge_dicts(v4_dict, v6_dict)
     return ret
 

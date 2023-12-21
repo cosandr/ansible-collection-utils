@@ -127,13 +127,25 @@ def net_overlaps(net, others):
     return None
 
 
-def check_net_overlaps(data):
+def get_subnet_network(data, net_name, subnet, v4_name, v6_name):
+    for var_name, var in data.items():
+        if not var_name.endswith("_net"):
+            continue
+        net_cfg = var.get(net_name, {})
+        for cidr in (net_cfg.get(v4_name), net_cfg.get(v6_name)):
+            if cidr is not None:
+                net = IPNetwork(cidr)
+                if subnet in net:
+                    return net
+
+
+def check_net_overlaps(data, v4_name, v6_name):
     checked = []
     for var_name, var in data.items():
         if not var_name.endswith("_net"):
             continue
         for net_name, net_cfg in var.items():
-            cidrs = (net_cfg.get("cidr"), net_cfg.get("cidr6"))
+            cidrs = (net_cfg.get(v4_name), net_cfg.get(v6_name))
             for cidr in cidrs:
                 if cidr is None:
                     continue
@@ -188,13 +200,16 @@ def check_vip_duplicates(data):
                 checked.append(vip)
 
 
-def check_subnet_gaps(data):
+def check_subnet_gaps(data, v4_name, v6_name):
     """Subnets MUST be in order!"""
     for net_name, net_subnets in data.get("subnets", {}).items():
         last_net = {}
         for sub_name, cidrs in net_subnets.items():
             for cidr in cidrs:
                 net = IPNetwork(cidr)
+                # Don't fill gaps between different CIDRs
+                if not get_subnet_network(data, net_name, net, v4_name, v6_name):
+                    continue
                 size = 32 if net.version == 4 else 128
                 if last_net.get(net.version) is None:
                     last_net[net.version] = (sub_name, net)
@@ -226,6 +241,8 @@ class LookupModule(template.LookupModule):
             raise AnsibleLookupError(
                 missing_required_lib("netaddr")
             ) from NETADDR_IMPORT_ERROR
+        v4_name = kwargs.pop("v4_name", "cidr")
+        v6_name = kwargs.pop("v6_name", "cidr6")
         acc_vars = dict()
         # Support list argument
         terms = terms[0]
@@ -236,7 +253,7 @@ class LookupModule(template.LookupModule):
             acc_vars |= yaml.safe_load(ret[0])
 
         # Check before removing reserved vars for more accuracy in the warning messages
-        check_subnet_gaps(acc_vars)
+        check_subnet_gaps(acc_vars, v4_name, v6_name)
         # Remove vars prefixed with _
         ret = {}
         for k, v in acc_vars.items():
@@ -254,7 +271,7 @@ class LookupModule(template.LookupModule):
             else:
                 ret[k] = v
 
-        check_net_overlaps(ret)
+        check_net_overlaps(ret, v4_name, v6_name)
         check_subnet_overlaps(ret)
         check_vip_duplicates(ret)
         # Dump to YAML, with extra list indentations

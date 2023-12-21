@@ -38,6 +38,23 @@ class TestSubnetsFromMap(unittest.TestCase):
         result = subnets_from_map(data, *args)
         self.assertEqual(result, output)
 
+    def test_v4_only_name(self):
+        data = {
+            "cidr": "172.20.0.0/16",
+            "cidr_internal": "172.27.0.0/16",
+        }
+        args = [{"svc": 18, "pod": 18, "test": 18}]
+        kwargs = dict(
+            v4_name="cidr_internal",
+        )
+        output = {
+            "svc": ["172.27.0.0/18"],
+            "pod": ["172.27.64.0/18"],
+            "test": ["172.27.128.0/18"],
+        }
+        result = subnets_from_map(data, *args, **kwargs)
+        self.assertEqual(result, output)
+
     def test_v4_only_start(self):
         data = {"cidr": "172.27.0.0/16"}
         args = [{"svc": 18, "pod": 18, "test": 18}]
@@ -145,6 +162,23 @@ class TestSubnetsFromMap(unittest.TestCase):
         result = subnets_from_map(data, *args)
         self.assertEqual(result, output)
 
+    def test_v6_only_name(self):
+        data = {
+            "cidr6": "fd00:172:20::/56",
+            "cidr6_internal": "fd00:172:27::/56",
+        }
+        args = [{"svc": 64, "pod": 64, "test": 64}]
+        kwargs = dict(
+            v6_name="cidr6_internal",
+        )
+        output = {
+            "svc": ["fd00:172:27::/64"],
+            "pod": ["fd00:172:27:1::/64"],
+            "test": ["fd00:172:27:2::/64"],
+        }
+        result = subnets_from_map(data, *args, **kwargs)
+        self.assertEqual(result, output)
+
     def test_v6_only_start(self):
         data = {"cidr6": "fd00:172:27::/112"}
         args = [{"svc": 114, "pod": 114, "test": 114}]
@@ -215,6 +249,26 @@ class TestSubnetsFromMap(unittest.TestCase):
             "test": ["172.27.128.0/18", "fd00:172:27::8000/114"],
         }
         result = subnets_from_map(data, *args)
+        self.assertEqual(result, output)
+
+    def test_dual_stack_name(self):
+        data = {
+            "cidr": "172.20.0.0/16",
+            "cidr6": "fd00:172:20::/112",
+            "cidr_internal": "172.27.0.0/16",
+            "cidr6_internal": "fd00:172:27::/112",
+        }
+        args = [{"svc": (18, 114), "pod": (18, 114), "test": (18, 114)}]
+        kwargs = dict(
+            v4_name="cidr_internal",
+            v6_name="cidr6_internal",
+        )
+        output = {
+            "svc": ["172.27.0.0/18", "fd00:172:27::/114"],
+            "pod": ["172.27.64.0/18", "fd00:172:27::4000/114"],
+            "test": ["172.27.128.0/18", "fd00:172:27::8000/114"],
+        }
+        result = subnets_from_map(data, *args, **kwargs)
         self.assertEqual(result, output)
 
     def test_dual_stack_start(self):

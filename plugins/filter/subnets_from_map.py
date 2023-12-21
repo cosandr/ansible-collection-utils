@@ -73,6 +73,8 @@ def generate_subnets(net, subnet_map, start=0, prefix_size=None, prefix_skip=0):
 def subnets_from_map(
     net_def,
     subnet_map,
+    v4_name="cidr",
+    v6_name="cidr6",
     v4_size=None,
     v6_size=None,
     v4_start=0,
@@ -87,13 +89,13 @@ def subnets_from_map(
     ret = {k: [] for k in subnet_map.keys()}
     v4_subs = {}
     v6_subs = {}
-    if "cidr" in net_def:
+    if v4_name in net_def:
         v4_subs = generate_subnets(
-            net_def["cidr"], subnet_map, v4_start, v4_size, v4_prefix_skip
+            net_def[v4_name], subnet_map, v4_start, v4_size, v4_prefix_skip
         )
-    if "cidr6" in net_def:
+    if v6_name in net_def:
         v6_subs = generate_subnets(
-            net_def["cidr6"], subnet_map, v6_start, v6_size, v6_prefix_skip
+            net_def[v6_name], subnet_map, v6_start, v6_size, v6_prefix_skip
         )
     for k in subnet_map.keys():
         for sub in v4_subs.get(k, []) + v6_subs.get(k, []):
