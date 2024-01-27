@@ -60,14 +60,20 @@ def sort_ports(ports):
     sfp = []
     unknown = []
     for p in ports:
-        if m := re.match(r"^ether(\d+)$", p):
+        # Sad Python <3.8 noises
+        m = re.match(r"^ether(\d+)$", p)
+        if m:
             ether.append((m.group(0), int(m.group(1))))
-        elif m := re.match(r"^sfp-sfpplus(\d+)$", p):
+            continue
+        m = re.match(r"^sfp-sfpplus(\d+)$", p)
+        if m:
             sfpplus.append((m.group(0), int(m.group(1))))
-        elif m := re.match(r"^sfpplus(\d+)$", p):
+            continue
+        m = re.match(r"^sfpplus(\d+)$", p)
+        if m:
             sfp.append((m.group(0), int(m.group(1))))
-        else:
-            unknown.append(p)
+            continue
+        unknown.append(p)
     # Sort by number
     ether = sorted(ether, key=lambda x: x[1])
     sfpplus = sorted(sfpplus, key=lambda x: x[1])
