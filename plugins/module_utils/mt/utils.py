@@ -53,10 +53,29 @@ def make_add_update_remove(existing, new_data, check_key):
     return to_add, to_update, to_remove
 
 
-def sort_trunks(trunk_ports, switch_cpu):
+def sort_ports(ports, switch_cpu):
     """Sort like source data: switch, ether, sfpplus, sfp-sfpplus"""
-    tmp = ",".join(trunk_ports)
-    ether = re.findall(r"(ether\d+)", tmp)
-    sfpplus = re.findall(r"[^-](sfpplus\d+)", tmp)
-    sfp = re.findall(r"(sfp-sfpplus\d+)", tmp)
-    return [switch_cpu] + ether + sfpplus + sfp
+    ether = []
+    sfpplus = []
+    sfp = []
+    unknown = []
+    for p in ports:
+        if m := re.match(r"^ether(\d+)$", p):
+            ether.append((m.group(0), int(m.group(1))))
+        elif m := re.match(r"^sfp-sfpplus(\d+)$", p):
+            sfpplus.append((m.group(0), int(m.group(1))))
+        elif m := re.match(r"^sfpplus(\d+)$", p):
+            sfp.append((m.group(0), int(m.group(1))))
+        else:
+            unknown.append(p)
+    # Sort by number
+    ether = sorted(ether, key=lambda x: x[1])
+    sfpplus = sorted(sfpplus, key=lambda x: x[1])
+    sfp = sorted(sfp, key=lambda x: x[1])
+    return (
+        [switch_cpu]
+        + [x[0] for x in ether]
+        + [x[0] for x in sfp]
+        + [x[0] for x in sfpplus]
+        + sorted(unknown)
+    )

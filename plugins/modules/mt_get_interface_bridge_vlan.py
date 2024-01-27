@@ -125,9 +125,6 @@ def main():
         vlan = cfg["vlan"]
         if vlan not in new_data:
             module.fail_json("Cannot find VLAN '{}'".format(vlan))
-        vid = vid_map.get(vlan)
-        if not vid:
-            module.fail_json("Cannot find VID for '{}'".format(vlan))
         new_data[vlan]["untagged"] = ",".join(cfg["ports"])
 
     # Configure trunk ports

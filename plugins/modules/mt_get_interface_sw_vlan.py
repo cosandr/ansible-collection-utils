@@ -108,7 +108,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.andrei.utils.plugins.module_utils.mt.utils import (
     make_add_update_remove,
     make_vid_map,
-    sort_trunks,
+    sort_ports,
 )
 
 
@@ -154,7 +154,7 @@ def main():
             continue
         new_data.append(
             {
-                "ports": ",".join(sort_trunks(ports, switch_cpu)),
+                "ports": ",".join(sort_ports(ports, switch_cpu)),
                 "vlan-id": vid_map[vlan],
             }
         )

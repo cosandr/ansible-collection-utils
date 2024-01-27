@@ -8,19 +8,12 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.andrei.utils.plugins.modules import mt_get_dns_entries
+from ansible_collections.andrei.utils.tests.unit.plugins.modules.utils import (
+    validate_output,
+)
 from ansible_collections.community.general.tests.unit.plugins.modules.utils import (
     set_module_args,
 )
-
-
-def validate_output(out, expected_add, expected_update, expected_remove):
-    assert out["to_add"] == expected_add
-    assert out["to_update"] == expected_update
-    assert out["to_remove"] == expected_remove
-    for item in out["to_update"]:
-        assert ".id" in item
-    for item in out["to_remove"]:
-        assert ".id" in item
 
 
 def test_missing_args(capfd):
