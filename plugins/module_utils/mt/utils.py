@@ -53,7 +53,7 @@ def make_add_update_remove(existing, new_data, check_key):
     return to_add, to_update, to_remove
 
 
-def sort_ports(ports, switch_cpu):
+def sort_ports(ports):
     """Sort like source data: switch, ether, sfpplus, sfp-sfpplus"""
     ether = []
     sfpplus = []
@@ -73,8 +73,7 @@ def sort_ports(ports, switch_cpu):
     sfpplus = sorted(sfpplus, key=lambda x: x[1])
     sfp = sorted(sfp, key=lambda x: x[1])
     return (
-        [switch_cpu]
-        + [x[0] for x in ether]
+        [x[0] for x in ether]
         + [x[0] for x in sfp]
         + [x[0] for x in sfpplus]
         + sorted(unknown)

@@ -21,10 +21,11 @@ options:
     trunk_ports:
         description:
           - List of ports to configure as tagged.
+          - May use the same format as I(access_ports).
           - The bridge interface is always included.
         required: false
         type: list
-        elements: str
+        elements: raw
         default: []
     access_ports:
         description: List of ports to configure as untagged.
@@ -88,13 +89,16 @@ new_data:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.andrei.utils.plugins.module_utils.mt.utils import make_vid_map
+from ansible_collections.andrei.utils.plugins.module_utils.mt.utils import (
+    make_vid_map,
+    sort_ports,
+)
 
 
 def main():
     argument_spec = dict(
         networks=dict(type="dict", required=True),
-        trunk_ports=dict(type="list", elements="str", default=[]),
+        trunk_ports=dict(type="list", elements="raw", default=[]),
         access_ports=dict(type="list", elements="dict", default=[]),
         bridge_name=dict(type="str", default="bridge1"),
     )
@@ -125,13 +129,28 @@ def main():
         vlan = cfg["vlan"]
         if vlan not in new_data:
             module.fail_json("Cannot find VLAN '{}'".format(vlan))
-        new_data[vlan]["untagged"] = ",".join(cfg["ports"])
+        new_data[vlan]["untagged"] = ",".join(sort_ports(cfg["ports"]))
 
     # Configure trunk ports
-    if trunk_ports:
-        for name, cfg in new_data.items():
-            # Ensure bridge is part of tagged VLANs
-            cfg["tagged"] = ",".join([bridge_name] + trunk_ports)
+    for vlan in new_data.keys():
+        ports = []
+        for idx, item in enumerate(trunk_ports):
+            if isinstance(item, str):
+                # Add plain ports to all VLANs
+                ports.append(item)
+            elif isinstance(item, dict):
+                if item["vlan"] not in new_data:
+                    module.fail_json("Cannot find VLAN '{}'".format(item["vlan"]))
+                if vlan == item["vlan"]:
+                    ports.extend(item["ports"])
+            else:
+                module.fail_json(
+                    "Element at index {} type ({}) is unsupported".format(
+                        idx, type(item).__name__
+                    )
+                )
+        if ports:
+            new_data[vlan]["tagged"] = ",".join([bridge_name] + sort_ports(ports))
 
     result = dict(changed=False, new_data=list(new_data.values()))
 

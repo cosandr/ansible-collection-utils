@@ -210,3 +210,117 @@ def test_bad_ports_trunk(capfd):
     assert not err
     assert out.get("failed", False)
     assert "'ether101' is not a bridge port" in out["msg"]
+
+
+def test_selective_trunk(capfd):
+    set_module_args(
+        {
+            "networks": NETWORKS,
+            "all_ports": ["ether1", "ether2", "ether3", "ether4"],
+            "trunk_ports": [
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether1", "ether4"],
+                },
+            ],
+        }
+    )
+    expected = [
+        {
+            "bridge": "bridge1",
+            "interface": "ether1",
+            "frame-types": "admit-only-vlan-tagged",
+        },
+        {
+            "bridge": "bridge1",
+            "interface": "ether2",
+        },
+        {
+            "bridge": "bridge1",
+            "interface": "ether3",
+        },
+        {
+            "bridge": "bridge1",
+            "interface": "ether4",
+            "frame-types": "admit-only-vlan-tagged",
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_interface_bridge_ports.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    print(out)
+    assert not err
+    assert not out.get("failed", False)
+    assert out["new_data"] == expected
+
+
+def test_mixed_trunk(capfd):
+    set_module_args(
+        {
+            "networks": NETWORKS,
+            "all_ports": ["ether1", "ether2", "ether3", "ether4"],
+            "trunk_ports": [
+                "ether1",
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether2"],
+                },
+                "ether4",
+            ],
+        }
+    )
+    expected = [
+        {
+            "bridge": "bridge1",
+            "interface": "ether1",
+            "frame-types": "admit-only-vlan-tagged",
+        },
+        {
+            "bridge": "bridge1",
+            "interface": "ether2",
+            "frame-types": "admit-only-vlan-tagged",
+        },
+        {
+            "bridge": "bridge1",
+            "interface": "ether3",
+        },
+        {
+            "bridge": "bridge1",
+            "interface": "ether4",
+            "frame-types": "admit-only-vlan-tagged",
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_interface_bridge_ports.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    print(out)
+    assert not err
+    assert not out.get("failed", False)
+    assert out["new_data"] == expected
+
+
+def test_bad_trunk_type(capfd):
+    set_module_args(
+        {
+            "networks": NETWORKS,
+            "all_ports": ["ether1", "ether2"],
+            "trunk_ports": [
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether1"],
+                },
+                123,
+            ],
+        }
+    )
+    with pytest.raises(SystemExit):
+        mt_get_interface_bridge_ports.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert out.get("failed", False)
+    assert "Element at index 1 type (int) is unsupported" == out["msg"]

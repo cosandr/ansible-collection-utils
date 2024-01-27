@@ -678,3 +678,188 @@ def test_missing_vlan(capfd):
     assert not err
     assert out.get("failed", False)
     assert "Cannot find VLAN 'BAD'" == out["msg"]
+
+
+def test_selective_trunk(capfd):
+    set_module_args(
+        {
+            "existing": [],
+            "networks": NETWORKS,
+            "trunk_ports": [
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether1"],
+                },
+            ],
+        }
+    )
+    expected_add = [
+        {
+            "vlan-id": 50,
+            "ports": "switch1-cpu,ether1",
+        },
+    ]
+    expected_update = []
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_interface_sw_vlan.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_mixed_trunk(capfd):
+    set_module_args(
+        {
+            "existing": [],
+            "networks": NETWORKS,
+            "trunk_ports": [
+                "ether1",
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether2"],
+                },
+                "ether4",
+            ],
+        }
+    )
+    expected_add = [
+        {
+            "vlan-id": 10,
+            "ports": "switch1-cpu,ether1,ether4",
+        },
+        {
+            "vlan-id": 50,
+            "ports": "switch1-cpu,ether1,ether2,ether4",
+        },
+        {
+            "vlan-id": 100,
+            "ports": "switch1-cpu,ether1,ether4",
+        },
+    ]
+    expected_update = []
+    expected_remove = []
+
+    with pytest.raises(SystemExit):
+        mt_get_interface_sw_vlan.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_mixed_trunk_all(capfd):
+    set_module_args(
+        {
+            "existing": [
+                {
+                    ".id": "1",
+                    "vlan-id": 10,
+                    "ports": "switch1-cpu,ether1",
+                },
+                {
+                    ".id": "2",
+                    "vlan-id": 50,
+                    "ports": "switch1-cpu,ether1,ether4",
+                },
+                {
+                    ".id": "4",
+                    "vlan-id": 20,
+                    "ports": "switch1-cpu,ether1,ether4",
+                },
+            ],
+            "networks": NETWORKS,
+            "trunk_ports": [
+                "ether1",
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether2", "ether4"],
+                },
+                {
+                    "vlan": "MGMT",
+                    "ports": ["ether5"],
+                },
+            ],
+        }
+    )
+    expected_add = [
+        {
+            "vlan-id": 100,
+            "ports": "switch1-cpu,ether1,ether5",
+        },
+    ]
+    expected_update = [
+        {
+            ".id": "2",
+            "vlan-id": 50,
+            "ports": "switch1-cpu,ether1,ether2,ether4",
+        },
+    ]
+    expected_remove = [
+        {
+            ".id": "4",
+            "vlan-id": 20,
+            "ports": "switch1-cpu,ether1,ether4",
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_interface_sw_vlan.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    validate_output(out, expected_add, expected_update, expected_remove)
+
+
+def test_bad_trunk_type(capfd):
+    set_module_args(
+        {
+            "existing": [],
+            "networks": NETWORKS,
+            "trunk_ports": [
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether1"],
+                },
+                123,
+            ],
+        }
+    )
+    with pytest.raises(SystemExit):
+        mt_get_interface_sw_vlan.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert out.get("failed", False)
+    assert "Element at index 1 type (int) is unsupported" == out["msg"]
+
+
+def test_missing_trunk_vlan(capfd):
+    set_module_args(
+        {
+            "existing": [],
+            "networks": NETWORKS,
+            "trunk_ports": [
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether3"],
+                },
+                {
+                    "vlan": "BAD",
+                    "ports": ["ether4"],
+                },
+            ],
+        }
+    )
+    with pytest.raises(SystemExit):
+        mt_get_interface_sw_vlan.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert out.get("failed", False)
+    assert "Cannot find VLAN 'BAD'" == out["msg"]

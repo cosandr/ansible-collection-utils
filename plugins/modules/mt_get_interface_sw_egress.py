@@ -30,7 +30,7 @@ options:
           - The switch chip is always included.
         required: false
         type: list
-        elements: str
+        elements: raw
         default: []
     switch_cpu:
         description: Name of switch chip to configure.
@@ -107,7 +107,7 @@ def main():
     argument_spec = dict(
         existing=dict(type="list", elements="dict", required=True),
         networks=dict(type="dict", required=True),
-        trunk_ports=dict(type="list", elements="str", default=[]),
+        trunk_ports=dict(type="list", elements="raw", default=[]),
         switch_cpu=dict(type="str", default="switch1-cpu"),
     )
 
@@ -125,11 +125,27 @@ def main():
     new_data = []
 
     # Add trunk ports
-    if trunk_ports:
-        for vid in vid_map.values():
+    for vlan, vid in vid_map.items():
+        ports = []
+        for idx, item in enumerate(trunk_ports):
+            if isinstance(item, str):
+                # Add plain ports to all VLANs
+                ports.append(item)
+            elif isinstance(item, dict):
+                if item["vlan"] not in vid_map:
+                    module.fail_json("Cannot find VLAN '{}'".format(item["vlan"]))
+                if vlan == item["vlan"]:
+                    ports.extend(item["ports"])
+            else:
+                module.fail_json(
+                    "Element at index {} type ({}) is unsupported".format(
+                        idx, type(item).__name__
+                    )
+                )
+        if ports:
             new_data.append(
                 {
-                    "tagged-ports": ",".join(sort_ports(trunk_ports, switch_cpu)),
+                    "tagged-ports": ",".join([switch_cpu] + sort_ports(ports)),
                     "vlan-id": vid,
                 }
             )

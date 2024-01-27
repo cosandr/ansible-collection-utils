@@ -29,7 +29,7 @@ options:
           - The switch chip is always included.
         required: false
         type: list
-        elements: str
+        elements: raw
         default: []
     access_ports:
         description: List of ports to configure as access ports.
@@ -116,7 +116,7 @@ def main():
     argument_spec = dict(
         existing=dict(type="list", elements="dict", required=True),
         networks=dict(type="dict", required=True),
-        trunk_ports=dict(type="list", elements="str", default=[]),
+        trunk_ports=dict(type="list", elements="raw", default=[]),
         access_ports=dict(type="list", elements="dict", default=[]),
         switch_cpu=dict(type="str", default="switch1-cpu"),
     )
@@ -144,9 +144,24 @@ def main():
         vlan_ports[vlan] = cfg["ports"]
 
     # Add trunk ports
-    if trunk_ports:
-        for vlan in vlan_ports.keys():
-            vlan_ports[vlan].extend(trunk_ports)
+    for vlan in vid_map.keys():
+        ports = []
+        for idx, item in enumerate(trunk_ports):
+            if isinstance(item, str):
+                # Add plain ports to all VLANs
+                ports.append(item)
+            elif isinstance(item, dict):
+                if item["vlan"] not in vid_map:
+                    module.fail_json("Cannot find VLAN '{}'".format(item["vlan"]))
+                if vlan == item["vlan"]:
+                    ports.extend(item["ports"])
+            else:
+                module.fail_json(
+                    "Element at index {} type ({}) is unsupported".format(
+                        idx, type(item).__name__
+                    )
+                )
+        vlan_ports[vlan].extend(ports)
 
     # Create new data list
     for vlan, ports in vlan_ports.items():
@@ -154,7 +169,7 @@ def main():
             continue
         new_data.append(
             {
-                "ports": ",".join(sort_ports(ports, switch_cpu)),
+                "ports": ",".join([switch_cpu] + sort_ports(ports)),
                 "vlan-id": vid_map[vlan],
             }
         )

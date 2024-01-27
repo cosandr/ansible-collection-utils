@@ -24,10 +24,11 @@ options:
     trunk_ports:
         description:
           - List of ports to configure admit-only-vlan-tagged for.
+          - May use the same format as I(access_ports).
           - Only for CRS3xx devices.
         required: false
         type: list
-        elements: str
+        elements: raw
         default: []
     access_ports:
         description:
@@ -113,7 +114,7 @@ def main():
     argument_spec = dict(
         networks=dict(type="dict", required=True),
         all_ports=dict(type="list", elements="str", required=True),
-        trunk_ports=dict(type="list", elements="str", default=[]),
+        trunk_ports=dict(type="list", elements="raw", default=[]),
         access_ports=dict(type="list", elements="dict", default=[]),
         bridge_name=dict(type="str", default="bridge1"),
         port_params=dict(type="dict", default={}),
@@ -154,10 +155,22 @@ def main():
             new_data[p]["pvid"] = vid
 
     # Configure trunk ports
-    for p in trunk_ports:
-        if p not in new_data:
-            module.fail_json("'{}' is not a bridge port".format(p))
-        new_data[p]["frame-types"] = "admit-only-vlan-tagged"
+    for idx, item in enumerate(trunk_ports):
+        ports = []
+        if isinstance(item, str):
+            ports = [item]
+        elif isinstance(item, dict):
+            ports = item["ports"]
+        else:
+            module.fail_json(
+                "Element at index {} type ({}) is unsupported".format(
+                    idx, type(item).__name__
+                )
+            )
+        for p in ports:
+            if p not in new_data:
+                module.fail_json("'{}' is not a bridge port".format(p))
+            new_data[p]["frame-types"] = "admit-only-vlan-tagged"
 
     result = dict(changed=False, new_data=list(new_data.values()))
 

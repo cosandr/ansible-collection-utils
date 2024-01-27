@@ -131,10 +131,8 @@ def test_sort_ports_sorted():
         "ether5",
         "sfp-sfpplus2",
     ]
-    switch_cpu = "switch1-cpu"
 
     expected = [
-        "switch1-cpu",
         "ether1",
         "ether2",
         "ether3",
@@ -144,7 +142,7 @@ def test_sort_ports_sorted():
         "sfp-sfpplus1",
         "sfp-sfpplus2",
     ]
-    actual = utils.sort_ports(trunk_ports, switch_cpu)
+    actual = utils.sort_ports(trunk_ports)
 
     assert actual == expected
 
@@ -163,10 +161,8 @@ def test_sort_ports_unsorted():
         "ether100",
         "sfp-sfpplus2",
     ]
-    switch_cpu = "switch1-cpu"
 
     expected = [
-        "switch1-cpu",
         "ether1",
         "ether2",
         "ether3",
@@ -179,6 +175,6 @@ def test_sort_ports_unsorted():
         "sfp-sfpplus2",
         "sfp-sfpplus100",
     ]
-    actual = utils.sort_ports(trunk_ports, switch_cpu)
+    actual = utils.sort_ports(trunk_ports)
 
     assert actual == expected
