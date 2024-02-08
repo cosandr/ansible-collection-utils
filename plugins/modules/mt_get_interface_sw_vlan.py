@@ -169,7 +169,7 @@ def main():
             continue
         new_data.append(
             {
-                "ports": ",".join([switch_cpu] + sort_ports(ports)),
+                "ports": ",".join([switch_cpu] + sort_ports(set(ports))),
                 "vlan-id": vid_map[vlan],
             }
         )

@@ -144,6 +144,7 @@ def main():
         }
         for k, v in port_params.items():
             new_data[p][k] = v
+    all_access_ports = set()
     # Configure access ports
     for cfg in access_ports:
         vid = vid_map.get(cfg["vlan"])
@@ -153,6 +154,7 @@ def main():
             if p not in new_data:
                 module.fail_json("'{}' is not a bridge port".format(p))
             new_data[p]["pvid"] = vid
+            all_access_ports.add(p)
 
     # Configure trunk ports
     for idx, item in enumerate(trunk_ports):
@@ -170,7 +172,8 @@ def main():
         for p in ports:
             if p not in new_data:
                 module.fail_json("'{}' is not a bridge port".format(p))
-            new_data[p]["frame-types"] = "admit-only-vlan-tagged"
+            if p not in all_access_ports:
+                new_data[p]["frame-types"] = "admit-only-vlan-tagged"
 
     result = dict(changed=False, new_data=list(new_data.values()))
 

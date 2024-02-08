@@ -336,3 +336,61 @@ def test_missing_trunk_vlan(capfd):
     assert not err
     assert out.get("failed", False)
     assert "Cannot find VLAN 'BAD'" == out["msg"]
+
+
+def test_hybrid(capfd):
+    set_module_args(
+        {
+            "networks": NETWORKS,
+            "trunk_ports": [
+                "ether1",
+                "ether2",
+                {
+                    "vlan": "VM",
+                    "ports": ["ether3"],
+                },
+                {
+                    "vlan": "MGMT",
+                    "ports": ["ether4"],
+                },
+            ],
+            "access_ports": [
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether1", "ether4"],
+                },
+                {
+                    "vlan": "VM",
+                    "ports": ["ether3"],
+                },
+            ],
+        }
+    )
+    expected = [
+        {
+            "bridge": "bridge1",
+            "tagged": "bridge1,ether1,ether2",
+            "untagged": "ether3",
+            "vlan-ids": 10,
+        },
+        {
+            "bridge": "bridge1",
+            "tagged": "bridge1,ether2",
+            "untagged": "ether1,ether4",
+            "vlan-ids": 50,
+        },
+        {
+            "bridge": "bridge1",
+            "tagged": "bridge1,ether1,ether2,ether4",
+            "vlan-ids": 100,
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_interface_bridge_vlan.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    print(out)
+    assert not err
+    assert not out.get("failed", False)
+    assert out["new_data"] == expected

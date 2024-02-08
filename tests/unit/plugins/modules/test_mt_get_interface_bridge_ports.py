@@ -324,3 +324,64 @@ def test_bad_trunk_type(capfd):
     assert not err
     assert out.get("failed", False)
     assert "Element at index 1 type (int) is unsupported" == out["msg"]
+
+
+def test_hybrid_crs3xx(capfd):
+    set_module_args(
+        {
+            "networks": NETWORKS,
+            "all_ports": ["ether1", "ether2", "ether3", "ether4"],
+            "trunk_ports": [
+                "ether1",
+                "ether2",
+                {
+                    "vlan": "VM",
+                    "ports": ["ether3"],
+                },
+                {
+                    "vlan": "MGMT",
+                    "ports": ["ether4"],
+                },
+            ],
+            "access_ports": [
+                {
+                    "vlan": "GENERAL",
+                    "ports": ["ether1", "ether4"],
+                },
+                {
+                    "vlan": "VM",
+                    "ports": ["ether3"],
+                },
+            ],
+        }
+    )
+    expected = [
+        {
+            "bridge": "bridge1",
+            "interface": "ether1",
+            "pvid": 50,
+        },
+        {
+            "bridge": "bridge1",
+            "interface": "ether2",
+            "frame-types": "admit-only-vlan-tagged",
+        },
+        {
+            "bridge": "bridge1",
+            "interface": "ether3",
+            "pvid": 10,
+        },
+        {
+            "bridge": "bridge1",
+            "interface": "ether4",
+            "pvid": 50,
+        },
+    ]
+
+    with pytest.raises(SystemExit):
+        mt_get_interface_bridge_ports.main()
+    out, err = capfd.readouterr()
+    out = json.loads(out)
+    assert not err
+    assert not out.get("failed", False)
+    assert out["new_data"] == expected

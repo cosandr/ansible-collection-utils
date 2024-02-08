@@ -88,6 +88,7 @@
     existing: "{{ __vlan_egress.msg }}"
     networks: "{{ mt_networks }}"
     trunk_ports: "{{ mt_trunk_ports }}"
+    access_ports: "{{ mt_access_ports }}"
   register: __sw_vlan_egress_config
 
 - name: Add missing egress tags  # noqa args[module]

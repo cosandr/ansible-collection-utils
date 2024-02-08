@@ -32,6 +32,12 @@ options:
         type: list
         elements: raw
         default: []
+    access_ports:
+        description: List of ports to configure as access ports. Used for hybrid ports.
+        required: false
+        type: list
+        elements: dict
+        default: []
     switch_cpu:
         description: Name of switch chip to configure.
         required: false
@@ -108,6 +114,7 @@ def main():
         existing=dict(type="list", elements="dict", required=True),
         networks=dict(type="dict", required=True),
         trunk_ports=dict(type="list", elements="raw", default=[]),
+        access_ports=dict(type="list", elements="dict", default=[]),
         switch_cpu=dict(type="str", default="switch1-cpu"),
     )
 
@@ -119,9 +126,14 @@ def main():
     existing = module.params["existing"]
     networks = module.params["networks"]
     trunk_ports = module.params["trunk_ports"]
+    access_ports = module.params["access_ports"]
     switch_cpu = module.params["switch_cpu"]
 
     vid_map = make_vid_map(networks)
+
+    access_port_map = {}
+    for cfg in access_ports:
+        access_port_map[cfg["vlan"]] = set(cfg["ports"])
     new_data = []
 
     # Add trunk ports
@@ -142,6 +154,7 @@ def main():
                         idx, type(item).__name__
                     )
                 )
+        ports = [p for p in ports if p not in access_port_map.get(vlan, [])]
         if ports:
             new_data.append(
                 {

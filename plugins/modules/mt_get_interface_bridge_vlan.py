@@ -115,6 +115,7 @@ def main():
 
     vid_map = make_vid_map(networks)
 
+    access_port_map = {}
     # Mapping to make processing easier
     new_data = {}
     # Add all VLANs
@@ -123,12 +124,14 @@ def main():
             "bridge": bridge_name,
             "vlan-ids": vid,
         }
+        access_port_map[name] = set()
 
     # Configure access ports
     for cfg in access_ports:
         vlan = cfg["vlan"]
         if vlan not in new_data:
             module.fail_json("Cannot find VLAN '{}'".format(vlan))
+        access_port_map[vlan] = set(cfg["ports"])
         new_data[vlan]["untagged"] = ",".join(sort_ports(cfg["ports"]))
 
     # Configure trunk ports
@@ -149,6 +152,7 @@ def main():
                         idx, type(item).__name__
                     )
                 )
+        ports = [p for p in ports if p not in access_port_map[vlan]]
         if ports:
             new_data[vlan]["tagged"] = ",".join([bridge_name] + sort_ports(ports))
 
