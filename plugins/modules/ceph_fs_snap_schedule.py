@@ -106,7 +106,11 @@ def get_schedule(module: AnsibleModule, path: str, fs: str) -> dict:
     rc, stdout, stderr = module.run_command(cmd)
     if rc != 0:
         module.fail_json(
-            msg="Failed to list snap schedules", rc=rc, stdout=stdout, stderr=stderr
+            msg="Failed to list snap schedules",
+            cmd=cmd,
+            rc=rc,
+            stdout=stdout,
+            stderr=stderr,
         )
     return json.loads(stdout)
 
@@ -126,6 +130,7 @@ def change_schedule(module: AnsibleModule, command: str, path: str, fs: str, spe
     if rc != 0:
         module.fail_json(
             msg=f"Failed to {command} snap schedule",
+            cmd=cmd,
             rc=rc,
             stdout=stdout,
             stderr=stderr,
@@ -150,6 +155,7 @@ def change_retention(
     if rc != 0:
         module.fail_json(
             msg=f"Failed to {command} snap retention",
+            cmd=cmd,
             rc=rc,
             stdout=stdout,
             stderr=stderr,
@@ -204,8 +210,14 @@ def main():
         if v:
             set_retention[retention_conv_map[k]] = v
 
-    existing_retention = existing["retention"][0]
-    existing_schedule = existing["schedule"][0]
+    try:
+        existing_retention = existing["retention"][0]
+    except (KeyError, IndexError):
+        existing_retention = {}
+    try:
+        existing_schedule = existing["schedule"][0]
+    except (KeyError, IndexError):
+        existing_schedule = ""
 
     add_spec = ""
     remove_spec = ""
@@ -243,8 +255,10 @@ def main():
 
     # Add new schedule before removing old one so we don't lose retention settings
     if existing_schedule != schedule:
+        changed = True
         change_schedule(module, "add", path, fs, schedule)
-        change_schedule(module, "remove", path, fs, existing_schedule)
+        if existing_schedule:
+            change_schedule(module, "remove", path, fs, existing_schedule)
 
     if remove_spec:
         change_retention(module, "remove", path, fs, remove_spec)
