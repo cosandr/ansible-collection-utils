@@ -9,10 +9,8 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.andrei.utils.plugins.modules import mt_get_dns_entries
 from ansible_collections.andrei.utils.tests.unit.plugins.modules.utils import (
-    validate_output,
-)
-from ansible_collections.community.general.tests.unit.plugins.modules.utils import (
     set_module_args,
+    validate_output,
 )
 
 

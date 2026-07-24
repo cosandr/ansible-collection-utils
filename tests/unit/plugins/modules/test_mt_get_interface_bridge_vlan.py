@@ -9,7 +9,7 @@ import json
 from ansible_collections.andrei.utils.plugins.modules import (
     mt_get_interface_bridge_vlan,
 )
-from ansible_collections.community.general.tests.unit.plugins.modules.utils import (
+from ansible_collections.andrei.utils.tests.unit.plugins.modules.utils import (
     set_module_args,
 )
 

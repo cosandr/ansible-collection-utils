@@ -10,10 +10,8 @@ from ansible_collections.andrei.utils.plugins.modules import (
     mt_get_interface_sw_ingress,
 )
 from ansible_collections.andrei.utils.tests.unit.plugins.modules.utils import (
-    validate_output,
-)
-from ansible_collections.community.general.tests.unit.plugins.modules.utils import (
     set_module_args,
+    validate_output,
 )
 
 
