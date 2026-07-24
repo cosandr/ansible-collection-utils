@@ -50,6 +50,13 @@ DOCUMENTATION = r"""
         description: The string marking the end of a comment statement.
         type: str
         default: '#}'
+      trim_blocks:
+        description:
+            - Determine when newlines should be removed from blocks.
+            - When set to yes the first newline after a block is removed (block, not variable tag!).
+        type: bool
+        default: yes
+        version_added: '2.19'
 """
 
 EXAMPLES = r"""
