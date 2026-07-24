@@ -56,7 +56,6 @@ DOCUMENTATION = r"""
             - When set to yes the first newline after a block is removed (block, not variable tag!).
         type: bool
         default: yes
-        version_added: '2.19'
 """
 
 EXAMPLES = r"""
