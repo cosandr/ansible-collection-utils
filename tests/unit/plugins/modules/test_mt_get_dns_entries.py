@@ -6,7 +6,6 @@ __metaclass__ = type
 import pytest
 import json
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.andrei.utils.plugins.modules import mt_get_dns_entries
 from ansible_collections.andrei.utils.tests.unit.plugins.modules.utils import (
     set_module_args,
@@ -55,7 +54,7 @@ def test_missing_existing(capfd):
     assert "missing required arguments" in out["msg"]
 
 
-def test_missing_primary_keys(capfd, mocker):
+def test_missing_primary_keys(capfd):
     set_module_args(
         {
             "data": [
@@ -66,16 +65,16 @@ def test_missing_primary_keys(capfd, mocker):
             "existing": [],
         }
     )
-    mock = mocker.patch.object(AnsibleModule, "log")
     with pytest.raises(SystemExit):
         mt_get_dns_entries.main()
     out, err = capfd.readouterr()
     out = json.loads(out)
     assert not out.get("failed", False)
     assert not err
-    mock.assert_called_with(
-        "[WARNING] mt_get_dns_entries: Data missing 'name' and 'regexp', check for undefined variables."
-    )
+    warnings = out.get("warnings", [])
+    assert [w["event"]["msg"] for w in warnings] == [
+        "mt_get_dns_entries: Data missing 'name' and 'regexp', check for undefined variables."
+    ]
 
 
 def test_exclusive_args(capfd):

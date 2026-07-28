@@ -47,14 +47,14 @@ RETURN = """
 """
 
 
-from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
+from ansible.errors import AnsibleFilterError, AnsibleTypeError
 from ansible.module_utils.common.collections import is_sequence
 
 
 def items2dictlist(_input, key_name, **kwargs):
     """Convert a list of items to a list of dictionaries keyed by 'key_name'."""
     if not is_sequence(_input):
-        raise AnsibleFilterTypeError(
+        raise AnsibleTypeError(
             "items2dictlist requires a list, got %s instead." % type(_input)
         )
     if key_name in kwargs:
